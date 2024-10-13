@@ -38,3 +38,7 @@ getgenv().Speed = 25 -- change speed to the number you want
 loadstring(game:HttpGet("https://raw.githubusercontent.com/eclipsology/SimpleSpeed/main/SimpleSpeed.lua"))()
     end
 end)
+local tab = DrRayLibrary.newTab("Credits", "ImageIdHere")
+tab.newButton("wh0asked1", "yeah i made this sigma hub", function()
+    print('Hello!')
+end)
