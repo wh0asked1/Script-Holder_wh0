@@ -1,0 +1,40 @@
+local DrRayLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
+local window = DrRayLibrary:Load("SIGMA IN CLASSIC ARENA", "Default")
+local jesus = Instance.new("Part", workspace)
+
+	jesus.Name = "jesusWalk"
+	jesus.Size = Vector3.new(2047, 0.009, 2019)
+	jesus.Position = Vector3.new(51.356, -69.32, -383.5)
+	jesus.CanCollide = false
+	jesus.Anchored = true
+	jesus.Transparency = 1
+	local tab = DrRayLibrary.newTab("Main", "ImageIdHere")
+	tab.newToggle("Anti Void Toggle", "Enable/Disable Anti Void", true, function(toggleState)
+    if toggleState then
+    jesus.CanCollide = true
+	jesus.Anchored = true
+	jesus.Transparency = 0.5
+    else
+    jesus.CanCollide = false
+	jesus.Anchored = true
+	jesus.Transparency = 1
+    end
+end)
+local tab = DrRayLibrary.newTab("Others", "ImageIdHere")
+tab.newButton("Bacon Lock", "Haha Locker Script", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/sdfesdfsedf/srgtergasdfs/main/aim", true))()
+end)
+tab.newButton("Fly V3", "Funny Fly Script", function()
+    loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Fly-v3-13879"))()
+end)
+tab.newToggle("No Stun", "Kinda", true, function(toggleState)
+    if toggleState then
+        getgenv().Enabled = true -- change to false then execute again to turn off
+getgenv().Speed = 25 -- change speed to the number you want
+loadstring(game:HttpGet("https://raw.githubusercontent.com/eclipsology/SimpleSpeed/main/SimpleSpeed.lua"))()
+    else
+        getgenv().Enabled = false -- change to false then execute again to turn off
+getgenv().Speed = 25 -- change speed to the number you want
+loadstring(game:HttpGet("https://raw.githubusercontent.com/eclipsology/SimpleSpeed/main/SimpleSpeed.lua"))()
+    end
+end)
