@@ -31,9 +31,6 @@ getgenv().Speed = 25 -- change speed to the number you want
 loadstring(game:HttpGet("https://raw.githubusercontent.com/eclipsology/SimpleSpeed/main/SimpleSpeed.lua"))()
     end
 end)
-tab.newSlider("WalkSpeed", "Change Your WalkSpeed", 100, false, function(s)  -- 100 (MaxValue) | 16 (MinValue)
-    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = s
-end)
 local tab = DrRayLibrary.newTab("Others", "ImageIdHere")
 tab.newButton("Bacon Lock", "Haha Locker Script", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/sdfesdfsedf/srgtergasdfs/main/aim", true))()
