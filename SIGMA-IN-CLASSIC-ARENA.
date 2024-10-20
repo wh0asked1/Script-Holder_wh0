@@ -31,6 +31,9 @@ getgenv().Speed = 25 -- change speed to the number you want
 loadstring(game:HttpGet("https://raw.githubusercontent.com/eclipsology/SimpleSpeed/main/SimpleSpeed.lua"))()
     end
 end)
+tab.newButton("Infinite Evasive", "you have to press it everytime tho", function()
+    game:GetService("ReplicatedStorage").Game.Events.EvasiveDash:FireServer()
+end)
 local tab = DrRayLibrary.newTab("Others", "ImageIdHere")
 tab.newButton("Bacon Lock", "Haha Locker Script", function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/sdfesdfsedf/srgtergasdfs/main/aim", true))()
