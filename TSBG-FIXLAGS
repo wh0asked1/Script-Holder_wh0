@@ -1,0 +1,87 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local Thrown = workspace:WaitForChild("Thrown")
+ 
+local effectClasses = {
+    ParticleEmitter = true,
+    Trail = true,
+    Fire = true,
+    Smoke = true,
+    Sparkles = true,
+    Beam = true,
+    Explosion = true,
+}
+ 
+local function removeEffectsFromPart(part)
+    if part then
+        for _, descendant in ipairs(part:GetDescendants()) do
+            if effectClasses[descendant.ClassName] then
+                descendant:Destroy()
+            end
+        end
+    end
+end
+ 
+task.spawn(function()
+    while true do
+        for _, player in ipairs(Players:GetPlayers()) do
+            local character = player.Character
+            if character then
+                local partsToCheck = {
+                    character:FindFirstChild("Head"),
+                    character:FindFirstChild("Torso"),
+                    character:FindFirstChild("Right Arm"),
+                    character:FindFirstChild("Left Arm"),
+                    character:FindFirstChild("Right Leg"),
+                    character:FindFirstChild("Left Leg")
+                }
+ 
+                for _, part in ipairs(partsToCheck) do
+                    removeEffectsFromPart(part)
+                end
+            end
+        end
+ 
+        local npc = workspace:FindFirstChild("Weakest Dummy")
+        if npc then
+            for _, descendant in ipairs(npc:GetDescendants()) do
+                if effectClasses[descendant.ClassName] then
+                    descendant:Destroy()
+                end
+            end
+        end
+ 
+        local terrain = workspace:FindFirstChild("Terrain")
+        if terrain then
+            for _, descendant in ipairs(terrain:GetDescendants()) do
+                if descendant.Name == "SmokeBack" or descendant.Name == "Attachment" then
+                    descendant:Destroy()
+                end
+            end
+        end
+ 
+        task.wait() 
+    end
+end)
+ 
+RunService.Heartbeat:Connect(function()
+    for _, obj in ipairs(Thrown:GetChildren()) do
+        if obj:IsA("Model") and (obj.Name == "Aurora" or obj.Name == "Donation Leaderboard") then
+        else
+            obj:Destroy()
+        end
+    end
+end)
+ 
+-- Notification
+if not getgenv().DisableNotification then
+    StarterGui:SetCore("SendNotification", {
+        Title = "No Rocks And effect are loaded😭🙏",
+        Icon = "rbxassetid://",
+        Text = "More scripts will be added soon",
+        Duration = 5,
+        Button1 = "Get out.",
+        Callback = function() end
+    })
+end
