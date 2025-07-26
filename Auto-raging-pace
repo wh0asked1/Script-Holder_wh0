@@ -1,0 +1,146 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local lp = Players.LocalPlayer
+local playerGui = lp:WaitForChild("PlayerGui")
+
+-- == Persistent Storage ==
+local savedRange = lp:FindFirstChild("RagingPaceRange")
+if not savedRange then
+    savedRange = Instance.new("NumberValue")
+    savedRange.Name = "RagingPaceRange"
+    savedRange.Value = 19 -- default range
+    savedRange.Parent = lp
+end
+
+local RANGE = savedRange.Value
+local SPAM_DURATION = 3
+local COOLDOWN_TIME = 5
+local activeCooldowns = {}
+local enabled = false
+
+-- == GUI ==
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "RagingPaceGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 120, 0, 40)
+toggleButton.Position = UDim2.new(0, 10, 0, 10)
+toggleButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.Text = "RagingPace: OFF"
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.TextSize = 16
+toggleButton.Parent = screenGui
+
+local rangeBox = Instance.new("TextBox")
+rangeBox.Size = UDim2.new(0, 80, 0, 40)
+rangeBox.Position = UDim2.new(0, 140, 0, 10)
+rangeBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+rangeBox.TextColor3 = Color3.new(1, 1, 1)
+rangeBox.Text = tostring(RANGE)
+rangeBox.PlaceholderText = "Range"
+rangeBox.Font = Enum.Font.SourceSans
+rangeBox.TextSize = 16
+rangeBox.ClearTextOnFocus = false
+rangeBox.Parent = screenGui
+
+-- == Animation ID List ==
+local animsToDetect = {
+    ["116618003477002"] = true,
+    ["119462383658044"] = true,
+    ["131696603025265"] = true,
+    ["121255898612475"] = true,
+    ["133491532453922"] = true,
+    ["103601716322988"] = true,
+    ["86371356500204"] = true,
+    ["72722244508749"] = true,
+    ["87259391926321"] = true,
+    ["96959123077498"] = true,
+}
+
+-- == Remote ==
+local function fireRagingPace()
+    local args = { "UseActorAbility", "RagingPace" }
+    ReplicatedStorage:WaitForChild("Modules"):WaitForChild("Network"):WaitForChild("RemoteEvent"):FireServer(unpack(args))
+end
+
+-- == Animation Checker ==
+local function isAnimationMatching(anim)
+    local id = tostring(anim.Animation and anim.Animation.AnimationId or "")
+    local numId = id:match("%d+")
+    return animsToDetect[numId] or false
+end
+
+-- == Main Detection ==
+RunService.Heartbeat:Connect(function()
+    if not enabled then return end
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local targetHRP = player.Character.HumanoidRootPart
+            local myChar = lp.Character
+            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                local dist = (targetHRP.Position - myChar.HumanoidRootPart.Position).Magnitude
+                if dist <= RANGE and (not activeCooldowns[player] or tick() - activeCooldowns[player] >= COOLDOWN_TIME) then
+                    local humanoid = player.Character:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        for _, track in pairs(humanoid:GetPlayingAnimationTracks()) do
+                            if isAnimationMatching(track) then
+                                activeCooldowns[player] = tick()
+                                task.spawn(function()
+                                    local startTime = tick()
+                                    while tick() - startTime < SPAM_DURATION do
+                                        fireRagingPace()
+                                        task.wait(0.05)
+                                    end
+                                end)
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- == Toggle Button Logic ==
+toggleButton.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    if enabled then
+        toggleButton.Text = "RagingPace: ON"
+        toggleButton.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+    else
+        toggleButton.Text = "RagingPace: OFF"
+        toggleButton.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    end
+end)
+
+-- == Range TextBox Logic ==
+local function updateRange()
+    local value = tonumber(rangeBox.Text)
+    if value and value > 0 then
+        RANGE = value
+        savedRange.Value = value -- save to persistent value
+    else
+        rangeBox.Text = tostring(RANGE)
+    end
+end
+
+rangeBox.FocusLost:Connect(updateRange)
+rangeBox:GetPropertyChangedSignal("Text"):Connect(function()
+    if #rangeBox.Text > 5 then
+        rangeBox.Text = rangeBox.Text:sub(1, 5)
+    end
+end)
+
+-- == Restore after Respawn ==
+lp.CharacterAdded:Connect(function()
+    task.wait(1) -- Let character load
+    RANGE = savedRange.Value
+    rangeBox.Text = tostring(RANGE)
+end)
