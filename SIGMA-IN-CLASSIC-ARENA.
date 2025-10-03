@@ -1,16 +1,19 @@
-local DrRayLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
-local window = DrRayLibrary:Load("SIGMA IN CLASSIC ARENA", "Default")
+local Library = loadstring(Game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wizard"))()
+local Window = Library:NewWindow("The Normal Button")
+local Tab = Window:NewSection("Main")
 local jesus = Instance.new("Part", workspace)
 
 	jesus.Name = "jesusWalk"
 	jesus.Size = Vector3.new(2047, 0.009, 2019)
-	jesus.Position = Vector3.new(51.356, -69.32, -383.5)
+	jesus.Position = Vector3.new(0, 0, 0)
 	jesus.CanCollide = false
 	jesus.Anchored = true
 	jesus.Transparency = 1
-	local tab = DrRayLibrary.newTab("Main", "ImageIdHere")
-	tab.newToggle("Anti Void Toggle", "Enable/Disable Anti Void", true, function(toggleState)
-    if toggleState then
+Tab:CreateButton("Get Coins", function()
+game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = workspace.Coin.CFrame + Vector3.new(0, 1, 0)
+end)
+Tab:CreateToggle("Anti Void", function(toggleState)
+if toggleState then
     jesus.CanCollide = true
 	jesus.Anchored = true
 	jesus.Transparency = 0.5
@@ -19,38 +22,4 @@ local jesus = Instance.new("Part", workspace)
 	jesus.Anchored = true
 	jesus.Transparency = 1
     end
-end)
-tab.newToggle("No Stun", "Kinda", true, function(toggleState)
-    if toggleState then
-        getgenv().Enabled = true -- change to false then execute again to turn off
-getgenv().Speed = 25 -- change speed to the number you want
-loadstring(game:HttpGet("https://raw.githubusercontent.com/eclipsology/SimpleSpeed/main/SimpleSpeed.lua"))()
-    else
-        getgenv().Enabled = false -- change to false then execute again to turn off
-getgenv().Speed = 25 -- change speed to the number you want
-loadstring(game:HttpGet("https://raw.githubusercontent.com/eclipsology/SimpleSpeed/main/SimpleSpeed.lua"))()
-    end
-end)
-tab.newButton("Infinite Evasive", "you have to press it everytime tho", function()
-    game:GetService("ReplicatedStorage").Game.Events.EvasiveDash:FireServer()
-end)
-tab.newKeybind("Infinite Evasive Keybind", "Input A Key Here (use a keyboard script)", function()
-    game:GetService("ReplicatedStorage").Game.Events.EvasiveDash:FireServer()
-end)
-local tab = DrRayLibrary.newTab("Others", "ImageIdHere")
-tab.newButton("Bacon Lock", "Haha Locker Script", function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/sdfesdfsedf/srgtergasdfs/main/aim", true))()
-end)
-tab.newButton("Fly V3", "Funny Fly Script", function()
-    loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Fly-v3-13879"))()
-end)
-tab.newButton("Infinity Yield FE", "certified admin script", function()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-end)
-local tab = DrRayLibrary.newTab("Credits", "ImageIdHere")
-tab.newButton("wh0asked1", "yeah i made this sigma hub", function()
-    setclipboard("https://www.youtube.com/@wh0asked1")
-end)
-tab.newButton("https://discord.gg/WKgS5aPJ78", "Discord Invite Link", function()
-    setclipboard("https://discord.gg/WKgS5aPJ78")
 end)
