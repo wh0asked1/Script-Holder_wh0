@@ -1,118 +1,196 @@
---// SERVICES
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+-- Mobile-compatible Silent Aim with center circle
+getgenv().FOV = 350
 local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local Client = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local camera = workspace.CurrentCamera
 
-local LocalPlayer = Players.LocalPlayer
-local Camera = Workspace.CurrentCamera
+-- IDENTICAL NETWORK HOOK
+setthreadidentity(2)
+local bb = require(Client.PlayerScripts.LocalManager.NetworkManager)
+setthreadidentity(8)
 
--- Folder containing zombies
-local ZombiesFolder = Workspace:FindFirstChild("Zombies")
-if not ZombiesFolder then
-    warn("Zombies folder not found!")
-    return
-end
+local Zombies = workspace.Zombies
+local SSCoreFunctions = {}
 
-local aimbotEnabled = false
-
---// GUI
-local gui = Instance.new("ScreenGui")
-gui.ResetOnSpawn = false
-gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
-local btn = Instance.new("TextButton")
-btn.Size = UDim2.new(0, 130, 0, 50)
-btn.Position = UDim2.new(0.03, 0, 0.75, 0)
-btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-btn.Text = "Camera: OFF"
-btn.Parent = gui
-
-btn.Active = true
-btn.Draggable = false -- we'll use custom dragging
-
---// TOGGLE
-btn.MouseButton1Click:Connect(function()
-    aimbotEnabled = not aimbotEnabled
-    btn.Text = aimbotEnabled and "Camera: ON" or "Camera: OFF"
-end)
-
---// DRAGGING SYSTEM (works mobile + PC)
-local dragging = false
-local dragStart
-local startPos
-
-local function updateDrag(input)
-    local delta = input.Position - dragStart
-    btn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                             startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-end
-
-btn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-
-        dragging = true
-        dragStart = input.Position
-        startPos = btn.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
+do
+    local _container = SSCoreFunctions
+    local rayParams = RaycastParams.new()
+    _container.current_target = nil
+    
+    local function GetClosestTarget()
+        local bestTarget = nil
+        local closestDistance = math.huge
+        
+        -- Get the CENTER of the screen
+        local viewportSize = camera.ViewportSize
+        local centerPos = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
+        
+        local function checkCharacter(char)
+            local part = char:FindFirstChild("Head")
+            if not part then return end
+            
+            -- Check distance to player first
+            local charPosition = char:GetPivot().Position
+            local playerPosition = Client.Character and Client.Character:GetPivot().Position
+            if not playerPosition then return end
+            
+            local distanceToPlayer = (charPosition - playerPosition).Magnitude
+            
+            -- Now check if within FOV circle
+            local viewportPoint = camera:WorldToViewportPoint(part.Position)
+            if viewportPoint.Z < 0 then return end
+            
+            local screenPos = Vector2.new(viewportPoint.X, viewportPoint.Y)
+            local screenDistance = (screenPos - centerPos).Magnitude
+            
+            if screenDistance > FOV then return end
+            
+            -- Target the CLOSEST to player within FOV
+            if distanceToPlayer < closestDistance then
+                bestTarget = part
+                closestDistance = distanceToPlayer
             end
+        end
+        
+        for _, v in ipairs(Zombies:GetChildren()) do
+            if v and v:IsA("Model") then
+                local humanoid = v:FindFirstChildOfClass("Humanoid")
+                if humanoid and humanoid.Health > 0 then
+                    checkCharacter(v)
+                end
+            end
+        end
+        return bestTarget
+    end
+    
+    _container.GetClosestTarget = GetClosestTarget
+    
+    local function innit()
+        RunService.RenderStepped:Connect(function()
+            _container.current_target = GetClosestTarget()
         end)
     end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch) then
-        updateDrag(input)
-    end
-end)
-
---// FIND NEAREST ZOMBIE HEAD
-local function getNearestHead()
-    local char = LocalPlayer.Character
-    if not char then return nil end
-
-    local hrp = char:FindFirstChild("HumanoidRootPart")
-    if not hrp then return nil end
-
-    local nearest, dist = nil, math.huge
-
-    for _, z in ipairs(ZombiesFolder:GetChildren()) do
-        local head = z:FindFirstChild("Head")
-        if head then
-            local d = (hrp.Position - head.Position).Magnitude
-            if d < dist then
-                dist = d
-                nearest = head
-            end
-        end
-    end
-
-    return nearest
+    
+    _container.innit = innit
 end
 
---// CAMERA LOOP
-RunService.RenderStepped:Connect(function()
-    if not aimbotEnabled then
-        if Camera.CameraType ~= Enum.CameraType.Custom then
-            Camera.CameraType = Enum.CameraType.Custom
+-- IDENTICAL NETWORK HOOK
+local old; old = hookfunction(bb.PassData, function(...)
+    local arguments = {...}
+    if arguments[2] == "WeaponAttack" then
+        table.foreach(arguments, warn)
+        if rawget(arguments[3][3], "3247E18F") ~= nil then
+            rawset(arguments[3][3], "3247E18F", nil)
         end
-        return
     end
+    return old(unpack(arguments))
+end)
 
-    local head = getNearestHead()
-    if head then
-        Camera.CameraType = Enum.CameraType.Scriptable
-
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local camPos = char.HumanoidRootPart.Position + Vector3.new(0, 2, 0)
-            Camera.CFrame = CFrame.new(camPos, head.Position)
+-- IDENTICAL NAMECALL HOOK
+local __namecall; __namecall = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local arguments = {...}
+    if method == "FindPartOnRayWithIgnoreList" and typeof(arguments[1]) == "Ray" then
+        local target = SSCoreFunctions.current_target
+        if target then
+            arguments[1] = Ray.new(camera.CFrame.Position, (target.Position - camera.CFrame.Position).Unit * 10000)
         end
+    end
+    return __namecall(self, unpack(arguments))
+end)
+
+SSCoreFunctions.innit()
+
+-- FIXED: Accurate center circle that doesn't move
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "SilentAimCircle"
+screenGui.ResetOnSpawn = false
+screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.DisplayOrder = 999
+screenGui.IgnoreGuiInset = true
+screenGui.Parent = game:GetService("CoreGui") or Client:WaitForChild("PlayerGui")
+
+-- Main circle frame that's perfectly centered
+local circle = Instance.new("Frame")
+circle.Name = "FOVCircle"
+circle.AnchorPoint = Vector2.new(0.5, 0.5) -- Perfect center
+circle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
+circle.Position = UDim2.new(0.5, 0, 0.5, 0) -- Absolute center
+circle.BackgroundTransparency = 1
+circle.BorderSizePixel = 0
+circle.Visible = true
+circle.ZIndex = 999
+circle.Parent = screenGui
+
+-- Perfect circle shape
+local uiCorner = Instance.new("UICorner")
+uiCorner.CornerRadius = UDim.new(1, 0) -- Perfect circle
+uiCorner.Parent = circle
+
+-- Circle outline
+local uiStroke = Instance.new("UIStroke")
+uiStroke.Thickness = 1.5
+uiStroke.Color = Color3.fromRGB(232, 173, 56)
+uiStroke.Transparency = 0.3
+uiStroke.LineJoinMode = Enum.LineJoinMode.Round
+uiStroke.Parent = circle
+
+-- ADDITIONAL: Center dot for reference
+local centerDot = Instance.new("Frame")
+centerDot.Name = "CenterDot"
+centerDot.AnchorPoint = Vector2.new(0.5, 0.5)
+centerDot.Size = UDim2.new(0, 4, 0, 4)
+centerDot.Position = UDim2.new(0.5, 0, 0.5, 0) -- Same center as circle
+centerDot.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+centerDot.BackgroundTransparency = 0.5
+centerDot.BorderSizePixel = 0
+centerDot.ZIndex = 1000
+centerDot.Parent = screenGui
+
+local dotCorner = Instance.new("UICorner")
+dotCorner.CornerRadius = UDim.new(1, 0)
+dotCorner.Parent = centerDot
+
+-- Update ONLY the appearance, NOT the position
+RunService.RenderStepped:Connect(function()
+    -- Circle stays PERFECTLY centered - position NEVER changes
+    -- Only update color based on target
+    if SSCoreFunctions.current_target then
+        uiStroke.Color = Color3.fromRGB(255, 50, 50)
+        uiStroke.Transparency = 0.1
+    else
+        uiStroke.Color = Color3.fromRGB(232, 173, 56)
+        uiStroke.Transparency = 0.3
+    end
+    
+    -- Update FOV size if changed
+    circle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
+end)
+
+-- Make sure the circle stays on top and doesn't move
+game:GetService("RunService").Heartbeat:Connect(function()
+    -- Force keep it centered
+    circle.Position = UDim2.new(0.5, 0, 0.5, 0)
+    centerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+    
+    -- Update size if FOV changed
+    circle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
+    
+    -- Keep it visible
+    circle.Visible = true
+    screenGui.Enabled = true
+end)
+
+-- Clean up if needed
+game:GetService("Players").PlayerRemoving:Connect(function(player)
+    if player == Client then
+        screenGui:Destroy()
     end
 end)
+
+print("Silent Aim Active")
+print("✓ Circle locked in center")
+print("✓ Targets closest zombie")
+print("✓ FOV: " .. FOV)
