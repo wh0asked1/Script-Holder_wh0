@@ -153,19 +153,15 @@ RunService.RenderStepped:Connect(function()
 end)
 
 game:GetService("RunService").Heartbeat:Connect(function()
-    -- Force keep it centered
     circle.Position = UDim2.new(0.5, 0, 0.5, 0)
     centerDot.Position = UDim2.new(0.5, 0, 0.5, 0)
     
-    -- Update size if FOV changed
     circle.Size = UDim2.new(0, FOV * 2, 0, FOV * 2)
     
-    -- Keep it visible
     circle.Visible = true
     screenGui.Enabled = true
 end)
 
--- Clean up if needed
 game:GetService("Players").PlayerRemoving:Connect(function(player)
     if player == Client then
         screenGui:Destroy()
